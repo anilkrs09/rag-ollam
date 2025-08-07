@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Flask App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        .form-group { margin-bottom: 20px; }
+        .response { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RAG with Ollama and PostgreSQL</h1>
+        
+        <!-- File Upload Form -->
+        <form method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="file">Upload PDF or CSV:</label>
+                <input type="file" name="file" id="file" accept=".pdf,.csv">
+                <button type="submit">Upload</button>
+            </div>
+        </form>
+        
+        <!-- Query Form -->
+        <form method="post">
+            <div class="form-group">
+                <label for="query">Ask a Question:</label>
+                <input type="text" name="query" id="query" style="width: 100%;">
+                <button type="submit">Submit</button>
+            </div>
+        </form>
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <p class="{{ category }}">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Query Response -->
+        {% if response %}
+            <div class="response">
+                <h3>Query:</h3>
+                <p>{{ query }}</p>
+                <h3>Response:</h3>
+                <p>{{ response }}</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
