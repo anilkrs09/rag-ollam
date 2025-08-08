@@ -45,7 +45,11 @@ def index():
                     chunks = load_and_process_files(**kwargs)
                     
                     # Embed and store
-                    vector_store = embed_and_store(chunks, DB_PARAMS, OLLAMA_EMBEDDING_MODEL)
+                    vector_store = embed_and_store(
+                        chunks,
+                        DB_PARAMS,
+                        OLLAMA_EMBEDDING_MODEL
+                    )
                     flash('File uploaded and processed successfully!', 'success')
                 except Exception as e:
                     flash(f'Error processing file: {str(e)}', 'error')

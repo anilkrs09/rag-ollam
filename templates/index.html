@@ -5,52 +5,150 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RAG Flask App</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .container { max-width: 800px; margin: auto; }
-        .form-group { margin-bottom: 20px; }
-        .response { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
-        .error { color: red; }
-        .success { color: green; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input[type="file"],
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .flash-message {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .response-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .response-container h3 {
+            margin-top: 0;
+            font-size: 1.2em;
+        }
+        .response-answer {
+            margin-bottom: 10px;
+            font-size: 1em;
+            line-height: 1.5;
+        }
+        .response-sources {
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        .response-sources ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .response-sources li {
+            padding: 5px 0;
+            color: #555;
+        }
+        .response-sources li:before {
+            content: "• ";
+            color: #007bff;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>RAG with Ollama and PostgreSQL</h1>
+        <h1>RAG Flask Application</h1>
         
-        <!-- File Upload Form -->
-        <form method="post" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="file">Upload PDF or CSV:</label>
-                <input type="file" name="file" id="file" accept=".pdf,.csv">
-                <button type="submit">Upload</button>
-            </div>
-        </form>
-        
-        <!-- Query Form -->
-        <form method="post">
-            <div class="form-group">
-                <label for="query">Ask a Question:</label>
-                <input type="text" name="query" id="query" style="width: 100%;">
-                <button type="submit">Submit</button>
-            </div>
-        </form>
-        
-        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <p class="{{ category }}">{{ message }}</p>
+                    <div class="flash-message {{ category }}">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
         
-        <!-- Query Response -->
-        {% if response %}
-            <div class="response">
-                <h3>Query:</h3>
-                <p>{{ query }}</p>
-                <h3>Response:</h3>
-                <p>{{ response }}</p>
+        <h2>Upload File</h2>
+        <form method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="file">Select PDF, CSV, or TXT file:</label>
+                <input type="file" id="file" name="file" accept=".pdf,.csv,.txt">
+            </div>
+            <button type="submit">Upload</button>
+        </form>
+        
+        <h2>Query Documents</h2>
+        <form method="post">
+            <div class="form-group">
+                <label for="query">Enter your question:</label>
+                <input type="text" id="query" name="query" style="width: 100%;">
+            </div>
+            <button type="submit">Query</button>
+        </form>
+        
+        {% if query and response %}
+            <div class="response-container">
+                <h3>Query: {{ query }}</h3>
+                {% set parts = response.split('Answer:\n') %}
+                {% if parts|length > 1 %}
+                    {% set answer_and_sources = parts[1].split('Source Files:\n') %}
+                    {% if answer_and_sources|length > 1 %}
+                        <p class="response-answer"><strong>Answer:</strong> {{ answer_and_sources[0]|trim }}</p>
+                        <div class="response-sources">
+                            <strong>Source Files:</strong>
+                            <ul>
+                                {% for source in answer_and_sources[1].split(', ') %}
+                                    {% if source|trim %}
+                                        <li>{{ source|trim }}</li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% else %}
+                        <p class="response-answer"><strong>Answer:</strong> {{ parts[1]|trim }}</p>
+                    {% endif %}
+                {% else %}
+                    <p class="response-answer">{{ response }}</p>
+                {% endif %}
             </div>
         {% endif %}
     </div>
