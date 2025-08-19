@@ -54,7 +54,58 @@ class DocumentProcessor:
         self.chunk_overlap = chunk_overlap
         self.enable_chunking = enable_chunking
 
-    # ... (extractors as before) ...
+   # ---------- Register Extractors ----------
+    def register_extractor(self, extensions, extractor_fn: Callable[[bytes], str]):
+        if isinstance(extensions, str):
+            extensions = [extensions]
+        for ext in extensions:
+            self.extractors[ext.lower()] = extractor_fn
+
+    def get_extractor(self, filename: str) -> Optional[Callable[[bytes], str]]:
+        ext = os.path.splitext(filename)[1].lower()
+        return self.extractors.get(ext)
+
+    # ---------- Extractors ----------
+    @staticmethod
+    def pdf_extractor(file_bytes: bytes) -> str:
+        text = ""
+        with fitz.open(stream=file_bytes, filetype="pdf") as doc:
+            for page in doc:
+                text += page.get_text()
+        return text
+
+    @staticmethod
+    def txt_extractor(file_bytes: bytes) -> str:
+        return file_bytes.decode("utf-8")
+
+    @staticmethod
+    def csv_extractor(file_bytes: bytes) -> str:
+        df = pd.read_csv(io.BytesIO(file_bytes))
+        return df.to_csv(index=False)
+
+    @staticmethod
+    def image_extractor(file_bytes: bytes) -> str:
+        image = Image.open(io.BytesIO(file_bytes))
+        return pytesseract.image_to_string(image)
+
+    # ---------- Chunking ----------
+    def chunk_text(self, text: str, filename: str):
+        if not self.enable_chunking:
+            return [Document(page_content=text, metadata={"filename": filename})]
+
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=self.chunk_size,
+            chunk_overlap=self.chunk_overlap,
+            length_function=len,
+            separators=["\n\n", "\n", ".", " ", ""]
+        )
+        chunks = splitter.split_text(text)
+        return [
+            Document(page_content=chunk,
+                     metadata={"filename": filename, "chunk_index": i})
+            for i, chunk in enumerate(chunks)
+        ]
+
 
     def chunk_text(self, text: str, filename: str):
         """Split text into smaller chunks if chunking is enabled."""
