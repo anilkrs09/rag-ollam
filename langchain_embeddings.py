@@ -12,6 +12,17 @@ google-cloud-storage
 
 
 import os
+processor = DocumentProcessor(
+    connection_string=Config.CONNECTION_STRING,
+    collection_name=Config.COLLECTION_NAME,
+    model_name=Config.OLLAMA_MODEL
+)
+
+# Register extractors
+processor.register_extractor(".pdf", processor.pdf_extractor)
+processor.register_extractor(".txt", processor.txt_extractor)
+processor.register_extractor(".csv", processor.csv_extractor)
+processor.register_extractor([".png", ".jpg", ".jpeg", ".tiff"], processor.image_extractor)
 
 class Config:
     # Postgres + pgvector
